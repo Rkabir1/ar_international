@@ -1,260 +1,284 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
-import 'dart:io';
+
+// ১. গ্লোবাল থিম ও ব্রান্ডিং
+class ARBranding {
+  static const Color primaryCharcoal = Color(0xFF2C3E50); 
+  static const Color logoRed = Color(0xFFE74C3C); 
+  static const Color bgGrey = Color(0xFFF4F7F6);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase connection failed: $e");
+  }
   runApp(const ARInternationalApp());
 }
 
 class ARInternationalApp extends StatelessWidget {
   const ARInternationalApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'AR International',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        primaryColor: ARBranding.primaryCharcoal,
+        scaffoldBackgroundColor: ARBranding.bgGrey,
+        fontFamily: 'Roboto',
       ),
-      home: const AuthWrapper(),
+      home: const LoginScreen(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        if (snapshot.hasData) return const Dashboard();
-        return const LoginScreen();
-      },
-    );
-  }
-}
+// ২. ইউজার রোলস
+enum UserRole { owner, staff, agent }
 
-// --- লগইন স্ক্রিন ---
+// ৩. মডার্ন লগইন স্ক্রিন
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController();
-  final _pass = TextEditingController();
-  bool _loading = false;
+  final TextEditingController _userController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
 
-  Future<void> _login() async {
-    if (_email.text.isEmpty || _pass.text.isEmpty) return;
-    setState(() => _loading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _email.text.trim(),
-        password: _pass.text.trim(),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login Failed: ${e.toString()}")),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
+  void _handleLogin() {
+    UserRole selectedRole = UserRole.agent; 
+    if (_userController.text == "admin") selectedRole = UserRole.owner;
+    if (_userController.text == "staff") selectedRole = UserRole.staff;
+
+    Navigator.push(context, MaterialPageRoute(
+      builder: (context) => MainDashboard(role: selectedRole)
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ARBranding.bgGrey,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            children: [
-              const Icon(Icons.flight_takeoff, size: 80, color: Colors.indigo),
-              const SizedBox(height: 20),
-              const Text("AR INTERNATIONAL", 
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo)),
-              const SizedBox(height: 40),
-              TextField(controller: _email, decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder())),
-              const SizedBox(height: 20),
-              TextField(controller: _pass, obscureText: true, decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder())),
-              const SizedBox(height: 30),
-              _loading 
-                ? const CircularProgressIndicator() 
-                : ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 55)),
-                    child: const Text("LOGIN"),
+          child: Container(
+            width: 350,
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, 10))],
+            ),
+            child: Column(
+              children: [
+                Image.asset(
+                  'assets/logo.png', 
+                  height: 100, 
+                  errorBuilder: (c, e, s) => const Icon(Icons.flight_takeoff, size: 80, color: ARBranding.logoRed)
+                ),
+                const SizedBox(height: 10),
+                const Text("AR INTERNATIONAL", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: ARBranding.primaryCharcoal, letterSpacing: 0.5)),
+                const Text("Enterprise Management Portal", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 40),
+                _buildTextField("User ID", "Enter your ID", _userController, false),
+                const SizedBox(height: 20),
+                _buildTextField("Password", "••••••••", _passController, true),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ARBranding.logoRed,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    onPressed: _handleLogin,
+                    child: const Text("LOGIN TO PANEL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-            ],
+                ),
+                const SizedBox(height: 25),
+                const Text("GLOBAL TRAVEL EXCELLENCE", style: TextStyle(fontSize: 10, color: Colors.grey, letterSpacing: 1.5)),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-// --- ড্যাশবোর্ড স্ক্রিন (পুরো লজিক সহ) ---
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
-  @override
-  _DashboardState createState() => _DashboardState();
-}
-
-class _DashboardState extends State<Dashboard> {
-  final _name = TextEditingController();
-  final _passport = TextEditingController();
-  final _payment = TextEditingController();
-  File? _image;
-  bool _isSaving = false;
-
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _image = File(picked.path));
-  }
-
-  // ডেটা সেভ এবং ইমেজ আপলোড লজিক
-  Future<void> _saveData() async {
-    if (_name.text.isEmpty || _image == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("সব তথ্য দিন এবং ছবি সিলেক্ট করুন")));
-      return;
-    }
-    setState(() => _isSaving = true);
-    try {
-      // ১. ইমেজ আপলোড করা
-      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      Reference ref = FirebaseStorage.instance.ref().child('clients/$fileName');
-      await ref.putFile(_image!);
-      String downloadUrl = await ref.getDownloadURL();
-
-      // ২. ফায়ারস্টোরে ডেটা রাখা
-      await FirebaseFirestore.instance.collection('clients').add({
-        'name': _name.text,
-        'passport': _passport.text,
-        'payment': _payment.text,
-        'imageUrl': downloadUrl,
-        'date': DateFormat('dd-MM-yyyy').format(DateTime.now()),
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      _name.clear(); _passport.clear(); _payment.clear();
-      setState(() => _image = null);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("সফলভাবে সেভ হয়েছে!")));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      setState(() => _isSaving = false);
-    }
-  }
-
-  // PDF রিসিট জেনারেশন লজিক
-  void _printReceipt(Map<String, dynamic> data) async {
-    final pdf = pw.Document();
-    pdf.addPage(
-      pw.Page(
-        build: (context) => pw.Padding(
-          padding: const pw.EdgeInsets.all(20),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(child: pw.Text("AR INTERNATIONAL", style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold))),
-              pw.Center(child: pw.Text("Money Receipt", style: pw.TextStyle(fontSize: 18))),
-              pw.Divider(),
-              pw.SizedBox(height: 20),
-              pw.Text("Date: ${data['date']}"),
-              pw.Text("Client Name: ${data['name']}"),
-              pw.Text("Passport No: ${data['passport']}"),
-              pw.Text("Payment Amount: ${data['payment']} BDT"),
-              pw.SizedBox(height: 50),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Client Signature"),
-                  pw.Text("Authorized Signature"),
-                ],
-              ),
-            ],
+  Widget _buildTextField(String label, String hint, TextEditingController controller, bool isPass) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: isPass,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
         ),
-      ),
+      ],
     );
-    await Printing.layoutPdf(onLayout: (format) => pdf.save());
   }
+}
+
+// ৪. মেইন ড্যাশবোর্ড
+class MainDashboard extends StatelessWidget {
+  final UserRole role;
+  const MainDashboard({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("AR International Panel"),
-        actions: [IconButton(onPressed: () => FirebaseAuth.instance.signOut(), icon: const Icon(Icons.logout))],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+        backgroundColor: ARBranding.primaryCharcoal,
+        elevation: 0,
+        title: Row(
           children: [
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  children: [
-                    TextField(controller: _name, decoration: const InputDecoration(labelText: "Client Name")),
-                    TextField(controller: _passport, decoration: const InputDecoration(labelText: "Passport Number")),
-                    TextField(controller: _payment, decoration: const InputDecoration(labelText: "Payment Amount"), keyboardType: TextInputType.number),
-                    const SizedBox(height: 15),
-                    _image == null 
-                      ? TextButton.icon(onPressed: _pickImage, icon: const Icon(Icons.image), label: const Text("Select Document Image"))
-                      : Image.file(_image!, height: 100),
-                    const SizedBox(height: 15),
-                    _isSaving 
-                      ? const CircularProgressIndicator() 
-                      : ElevatedButton(onPressed: _saveData, style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)), child: const Text("SAVE TO DATABASE")),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Text("Recent Transactions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Divider(),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('clients').orderBy('timestamp', descending: true).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    var data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(backgroundImage: NetworkImage(data['imageUrl'])),
-                        title: Text(data['name']),
-                        subtitle: Text("Passport: ${data['passport']}"),
-                        trailing: IconButton(icon: const Icon(Icons.print, color: Colors.indigo), onPressed: () => _printReceipt(data)),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            Image.asset('assets/logo.png', height: 35, errorBuilder: (c, e, s) => const Icon(Icons.flight, color: Colors.white)),
+            const SizedBox(width: 10),
+            Text("${role.name.toUpperCase()} PANEL", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
           ],
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.logout), onPressed: () => Navigator.pop(context)),
+        ],
+      ),
+      drawer: _buildDrawer(context),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Quick Overview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            _buildStatsGrid(),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Recent Document Submissions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                if (role != UserRole.agent) 
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(20)),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.sync, size: 14, color: Colors.green),
+                        SizedBox(width: 4),
+                        Text("Live Sync", style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            _buildFileList(),
+          ],
+        ),
+      ),
+      floatingActionButton: role == UserRole.agent 
+        ? FloatingActionButton.extended(
+            backgroundColor: ARBranding.logoRed,
+            onPressed: () {}, 
+            label: const Text("Upload Document", style: TextStyle(color: Colors.white)), 
+            icon: const Icon(Icons.add_a_photo, color: Colors.white))
+        : null,
+    );
+  }
+
+  Widget _buildStatsGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      childAspectRatio: 1.5,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      children: [
+        _statCard("Total Clients", "128", Colors.blue),
+        _statCard("Pending Files", "14", ARBranding.logoRed),
+        if (role == UserRole.owner) _statCard("Total Cash", "৳ 12.5L", Colors.green),
+        if (role == UserRole.owner) _statCard("Net Profit", "৳ 3.2L", Colors.teal),
+      ],
+    );
+  }
+
+  Widget _statCard(String title, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), 
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)]),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 5),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: const CircleAvatar(backgroundColor: ARBranding.bgGrey, child: Icon(Icons.picture_as_pdf, color: ARBranding.logoRed)),
+            title: Text("Client_Passport_00${index + 1}.pdf", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            subtitle: Text("By: Dhaka Agent | 08:45 PM", style: const TextStyle(fontSize: 12)),
+            trailing: IconButton(
+              icon: const Icon(Icons.cloud_download, color: Colors.blueGrey),
+              onPressed: () {},
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: ARBranding.primaryCharcoal),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.flight_takeoff, size: 50, color: Colors.white),
+                const SizedBox(height: 10),
+                const Text("AR INTERNATIONAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          ListTile(leading: const Icon(Icons.home), title: const Text("Dashboard"), onTap: () {}),
+          ListTile(leading: const Icon(Icons.folder_shared), title: const Text("Client Archives"), onTap: () {}),
+          if (role != UserRole.agent) ListTile(leading: const Icon(Icons.account_balance_wallet), title: const Text("Accounts & Cash"), onTap: () {}),
+          const Divider(),
+          ListTile(leading: const Icon(Icons.settings), title: const Text("Settings"), onTap: () {}),
+        ],
       ),
     );
   }
