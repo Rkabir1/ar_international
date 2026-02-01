@@ -1,0 +1,31 @@
+plugins {
+    id "com.android.application"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+}
+
+android {
+    namespace "Com.ar_international.app"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "Com.ar_international.app"
+        minSdkVersion flutter.minSdkVersion
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+dependencies {
+    implementation platform("com.google.firebase:firebase-bom:32.2.0")
+    implementation "com.google.firebase:firebase-auth"
+    implementation "com.google.firebase:firebase-firestore"
+    implementation "com.google.firebase:firebase-storage"
+}
