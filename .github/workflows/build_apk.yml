@@ -1,4 +1,5 @@
 name: Flutter Build APK
+
 on:
   push:
     branches: [ main ]
@@ -8,12 +9,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # v3 থেকে v4 এ আপডেট
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.0'
-          channel: 'stable'
+      - uses: actions/checkout@v4
       
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # এটি সবসময় লেটেস্ট ভার্সন নেবে
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -21,7 +23,7 @@ jobs:
         run: flutter build apk --debug --android-skip-build-dependency-validation
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4 # v3 থেকে v4 এ আপডেট (এই এররটাই আসছিল)
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
