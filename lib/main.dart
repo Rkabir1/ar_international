@@ -1,284 +1,121 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 
-// ১. গ্লোবাল থিম ও ব্রান্ডিং
-class ARBranding {
-  static const Color primaryCharcoal = Color(0xFF2C3E50); 
-  static const Color logoRed = Color(0xFFE74C3C); 
-  static const Color bgGrey = Color(0xFFF4F7F6);
+void main() {
+  runApp(const MyApp());
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint("Firebase connection failed: $e");
-  }
-  runApp(const ARInternationalApp());
-}
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-class ARInternationalApp extends StatelessWidget {
-  const ARInternationalApp({super.key});
-
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AR International',
-      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
       theme: ThemeData(
-        primaryColor: ARBranding.primaryCharcoal,
-        scaffoldBackgroundColor: ARBranding.bgGrey,
-        fontFamily: 'Roboto',
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginScreen(),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-// ২. ইউজার রোলস
-enum UserRole { owner, staff, agent }
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
 
-// ৩. মডার্ন লগইন স্ক্রিন
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  final String title;
+
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _userController = TextEditingController();
-  final TextEditingController _passController = TextEditingController();
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
-  void _handleLogin() {
-    UserRole selectedRole = UserRole.agent; 
-    if (_userController.text == "admin") selectedRole = UserRole.owner;
-    if (_userController.text == "staff") selectedRole = UserRole.staff;
-
-    Navigator.push(context, MaterialPageRoute(
-      builder: (context) => MainDashboard(role: selectedRole)
-    ));
+  void _incrementCounter() {
+    setState(() {
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ARBranding.bgGrey,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            width: 350,
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, 10))],
-            ),
-            child: Column(
-              children: [
-                Image.asset(
-                  'assets/logo.png', 
-                  height: 100, 
-                  errorBuilder: (c, e, s) => const Icon(Icons.flight_takeoff, size: 80, color: ARBranding.logoRed)
-                ),
-                const SizedBox(height: 10),
-                const Text("AR INTERNATIONAL", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: ARBranding.primaryCharcoal, letterSpacing: 0.5)),
-                const Text("Enterprise Management Portal", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 40),
-                _buildTextField("User ID", "Enter your ID", _userController, false),
-                const SizedBox(height: 20),
-                _buildTextField("Password", "••••••••", _passController, true),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ARBranding.logoRed,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    onPressed: _handleLogin,
-                    child: const Text("LOGIN TO PANEL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                const Text("GLOBAL TRAVEL EXCELLENCE", style: TextStyle(fontSize: 10, color: Colors.grey, letterSpacing: 1.5)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, String hint, TextEditingController controller, bool isPass) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: isPass,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ৪. মেইন ড্যাশবোর্ড
-class MainDashboard extends StatelessWidget {
-  final UserRole role;
-  const MainDashboard({super.key, required this.role});
-
-  @override
-  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: ARBranding.primaryCharcoal,
-        elevation: 0,
-        title: Row(
-          children: [
-            Image.asset('assets/logo.png', height: 35, errorBuilder: (c, e, s) => const Icon(Icons.flight, color: Colors.white)),
-            const SizedBox(width: 10),
-            Text("${role.name.toUpperCase()} PANEL", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-          ],
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.logout), onPressed: () => Navigator.pop(context)),
-        ],
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
       ),
-      drawer: _buildDrawer(context),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainAxisAlignment: .center,
           children: [
-            const Text("Quick Overview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            _buildStatsGrid(),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Recent Document Submissions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                if (role != UserRole.agent) 
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(20)),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.sync, size: 14, color: Colors.green),
-                        SizedBox(width: 4),
-                        Text("Live Sync", style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-              ],
+            const Text('You have pushed the button this many times:'),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
-            const SizedBox(height: 15),
-            _buildFileList(),
           ],
         ),
       ),
-      floatingActionButton: role == UserRole.agent 
-        ? FloatingActionButton.extended(
-            backgroundColor: ARBranding.logoRed,
-            onPressed: () {}, 
-            label: const Text("Upload Document", style: TextStyle(color: Colors.white)), 
-            icon: const Icon(Icons.add_a_photo, color: Colors.white))
-        : null,
-    );
-  }
-
-  Widget _buildStatsGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 1.5,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      children: [
-        _statCard("Total Clients", "128", Colors.blue),
-        _statCard("Pending Files", "14", ARBranding.logoRed),
-        if (role == UserRole.owner) _statCard("Total Cash", "৳ 12.5L", Colors.green),
-        if (role == UserRole.owner) _statCard("Net Profit", "৳ 3.2L", Colors.teal),
-      ],
-    );
-  }
-
-  Widget _statCard(String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), 
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)]),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          const SizedBox(height: 5),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFileList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            leading: const CircleAvatar(backgroundColor: ARBranding.bgGrey, child: Icon(Icons.picture_as_pdf, color: ARBranding.logoRed)),
-            title: Text("Client_Passport_00${index + 1}.pdf", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Text("By: Dhaka Agent | 08:45 PM", style: const TextStyle(fontSize: 12)),
-            trailing: IconButton(
-              icon: const Icon(Icons.cloud_download, color: Colors.blueGrey),
-              onPressed: () {},
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: ARBranding.primaryCharcoal),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.flight_takeoff, size: 50, color: Colors.white),
-                const SizedBox(height: 10),
-                const Text("AR INTERNATIONAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          ListTile(leading: const Icon(Icons.home), title: const Text("Dashboard"), onTap: () {}),
-          ListTile(leading: const Icon(Icons.folder_shared), title: const Text("Client Archives"), onTap: () {}),
-          if (role != UserRole.agent) ListTile(leading: const Icon(Icons.account_balance_wallet), title: const Text("Accounts & Cash"), onTap: () {}),
-          const Divider(),
-          ListTile(leading: const Icon(Icons.settings), title: const Text("Settings"), onTap: () {}),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }
