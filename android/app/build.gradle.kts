@@ -7,28 +7,21 @@ plugins {
 
 android {
     namespace = "com.example.ar_international"
+android {
+    // এখানে namespace পরিবর্তন করুন
+    namespace = "com.ar_international.app" 
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.ar_international"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // এখানে applicationId পরিবর্তন করুন
+        applicationId = "com.ar_international.app" 
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    // বাকি অংশ আগের মতোই থাকবে...
+}
 
     buildTypes {
         release {
